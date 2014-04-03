@@ -1,0 +1,29 @@
+{
+  "name": "image-server",
+  "version": "0.0.1",
+  "description": "image server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ququzone/image-server"
+  },
+  "keywords": [
+    "image",
+    "graphicsmagick"
+  ],
+  "author": "xueping.yang@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ququzone/image-server/issues"
+  },
+  "homepage": "https://github.com/ququzone/image-server",
+  "dependencies": {
+    "connect": "^2.14.1",
+    "gm": "^1.14.2",
+    "underscore": "^1.6.0",
+    "async": "^0.2.10"
+  }
+}
