@@ -22,8 +22,10 @@
   "homepage": "https://github.com/ququzone/image-server",
   "dependencies": {
     "connect": "^2.14.1",
-    "gm": "^1.14.2",
     "underscore": "^1.6.0",
-    "async": "^0.2.10"
+    "async": "^0.2.10",
+    "fresh": "^0.2.2",
+    "buffer-crc32": "^0.2.1",
+    "gm": "^1.14.2"
   }
 }
