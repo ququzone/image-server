@@ -29,8 +29,7 @@ module.exports = function(prefix, root, options) {
         setHeader(res, pathname, stat);
         if (isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
 
-        gm(realpath)
-        .format(function (err, format) {
+        gm(realpath).format(function(err, format) {
           if(err) return error(res, 404, 'file not found');
           var contentType = mime.types[format.toLowerCase()] || mime.default;
           res.setHeader('Content-Type', contentType);
@@ -39,7 +38,18 @@ module.exports = function(prefix, root, options) {
             res.statusCode = 200;
             raw.pipe(res);
           } else {
-            res.end('hello');
+            var w = req.query.w;
+            var h = req.query.h;
+            if(!w && !h) {
+              return error(res, 404, "miss resize parameters")
+            }
+            gm(realpath)
+            .resize(w, h)
+            .stream(function(err, stdout, stderr) {
+              if(err) return error(res, 404, 'file not found');
+              res.statusCode = 200;
+              stdout.pipe(res);
+            });
           }
         });
       });
