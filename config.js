@@ -4,7 +4,8 @@ module.exports = {
     root   : '/Users/ququzone/Develop/temp/wms/files/resources'
   },
   ssdb: {
-    host : 'localhost',
-    port : '9999'
+    host   : 'localhost',
+    port   : '9999',
+    prefix : 'image:'
   }
 }

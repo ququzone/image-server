@@ -1,5 +1,9 @@
 var ssdb = require('SSDB');
 
-exports.set = function() {
+exports.addFile = function(name, file, callback) {
+  ssdb.
+}
+
+exports.addCache = function(name, version, file, callback) {
   //
 }
