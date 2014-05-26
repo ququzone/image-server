@@ -21,6 +21,16 @@ exports.get = function(req, res) {
   });
 }
 
+exports.imageview = function(req, res) {
+  store.getFileMeta(req.params.id, function(err, meta) {
+    if(err) return error(res, 404, 'file not found');
+    var pathname = url.parse(req.url).pathname;
+    setHeader(res, pathname, meta);
+    if (isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
+    // TODO
+  });
+}
+
 function setHeader(res, pathname, meta) {
   // TODO
   // if (!res.getHeader('Accept-Ranges')) res.setHeader('Accept-Ranges', 'bytes');

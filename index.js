@@ -12,9 +12,7 @@ app.get('/', function(req, res) {
 
 app.get(config.image.prefix + '/:id', images.get);
 
-app.get(config.image.prefix + '/:id/imageview', function(req, res) {
-  res.end('image view:' + req.params.id + JSON.stringify(req.query));
-});
+app.get(config.image.prefix + '/:id/imageview', images.imageview);
 
 app.get(config.image.prefix, function(res, res) {
   res.send('<form method="post" enctype="multipart/form-data">'
