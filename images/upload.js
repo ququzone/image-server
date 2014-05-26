@@ -30,7 +30,7 @@ module.exports = function(req, res) {
     var id = uuid.v4(); 
     store.addFile(id, buffer, function(err) {
       if(err) {
-        utils.writeJSON(res, {success: false, msg: 'save file error.'});
+        utils.writeJSON(res, {success: false, msg: err});
         return;
       }
       utils.writeJSON(res, {success: true, id: id});

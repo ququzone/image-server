@@ -30,7 +30,7 @@ exports.connect = function(host, port, timeout, listener){
             listener('connect_failed', e);
         }else{
             var callback = callbacks.shift();
-            callback(['error']);
+            if(callback) callback(['error']);
         }
     });
     sock.connect(port, host, function(){
@@ -387,16 +387,35 @@ exports.connect = function(host, port, timeout, listener){
         });
     }
 
-    self.multi_set = function(name, kvs, callback){
+    self.multi_hset = function(name, kvs, callback){
         var params = _.reduce(kvs, function(a, v, k) {
             a.push(k);
             a.push(v);
             return a;
-        }, []);
-        self.request('multi_set', params, function(resp){
+        }, [name]);
+        self.request('multi_hset', params, function(resp){
             if(callback){
                 var err = resp[0] == 'ok'? 0 : resp[0];
                 callback(err);
+            }
+        });
+    }
+
+    self.multi_hget = function(name, keys, callback) {
+        self.request('multi_hget', [name].concat(keys), function(resp){
+            if(callback){
+                var err = resp[0] == 'ok'? 0 : resp[0];
+                if(resp.length % 2 != 1){
+                    callback('error');
+                }else{
+                    var data = {};
+                    for(var i=1; i<resp.length; i+=2){
+                        var k = resp[i].toString();
+                        var v = resp[i+1];
+                        data[k] = v;
+                    }
+                    callback(err, data);
+                }
             }
         });
     }

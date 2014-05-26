@@ -1,6 +1,7 @@
 var express = require('express')
   , multiparty = require('multiparty')
   , config = require('./config')
+  , images = require('./images')
   , upload = require('./images/upload');
 
 var app = express();
@@ -9,9 +10,7 @@ app.get('/', function(req, res) {
   res.end('hello, image server.');
 });
 
-app.get(config.image.prefix + '/:id', function(req, res) {
-  res.end('origin image:' + req.params.id);
-});
+app.get(config.image.prefix + '/:id', images.get);
 
 app.get(config.image.prefix + '/:id/imageview', function(req, res) {
   res.end('image view:' + req.params.id + JSON.stringify(req.query));

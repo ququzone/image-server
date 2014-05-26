@@ -1,7 +1,6 @@
 module.exports = {
   image: {
-    prefix : '/images',
-    root   : '/Users/ququzone/Develop/temp/wms/files/resources'
+    prefix : '/images'
   },
   ssdb: {
     host    : 'localhost',
