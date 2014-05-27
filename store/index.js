@@ -12,9 +12,9 @@ function getCacheKey(name) {
 }
 
 exports.addFile = function(name, file, callback) {
-  gm(file).format(function(err, format) {
-    if(err) return callback('file format error');
-    var contentType = mime.types[format.toLowerCase()] || mime.default;
+  gm(file).identify(function(err, data) {
+    if(err) return callback('image file error');
+    var contentType = mime.types[data.format.toLowerCase()] || mime.default;
     var ssdb = SSDB.connect(config.ssdb.host, config.ssdb.port, config.ssdb.timeout);
     var key = getFileKey(name);
     ssdb.hsize(key, function(err, size) {
@@ -24,7 +24,14 @@ exports.addFile = function(name, file, callback) {
       }
       ssdb.multi_hset(
         key, 
-        {mtime: new Date().getTime(), size: file.length, mime: contentType, data: file},
+        {
+          mtime: new Date().getTime(),
+          size: file.length,
+          width: data.size.width,
+          height: data.size.height,
+          mime: contentType,
+          data: file
+        },
         function(err) {
           ssdb.close();
           if(err) {
@@ -62,6 +69,36 @@ exports.getFile = function(name, callback) {
   });
 }
 
-exports.addCache = function(name, version, file, callback) {
-  //
+exports.getFileCache = function(name, query, callback) {
+  var ssdb = SSDB.connect(config.ssdb.host, config.ssdb.port, config.ssdb.timeout);
+  var hname = getCacheKey(name);
+  var key = 'w/' + query.w + '/h/' + query.h;
+  ssdb.hget(hname, key, function(err, data) {
+    if(err) {
+      ssdb.hget(getFileKey(name), 'data', function(err, originData) {
+        if(err) {
+          ssdb.close();
+          return callback('file not found');
+        }
+        gm(originData)
+        .resize(query.w, query.h)
+        .toBuffer(function(err, buffer) {
+          if(err) {
+            ssdb.close();
+            return callback('file resize error');
+          }
+          ssdb.hset(hname, key, buffer, function(err) {
+            ssdb.close();
+            if(err) {
+              return callback('set file to ssdb error');
+            }
+            return callback(null, buffer);
+          });
+        });
+      });
+    } else {
+      ssdb.close();
+      return callback(null, data);
+    }
+  });
 }

@@ -11,7 +11,7 @@ exports.get = function(req, res) {
     if(err) return error(res, 404, 'file not found');
     var pathname = url.parse(req.url).pathname;
     setHeader(res, pathname, meta);
-    if (isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
+    if(isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
     store.getFile(req.params.id, function(err, file) {
       if(err) return error(res, 500, 'file error');
       res.setHeader('Content-Type', meta.mime);
@@ -26,20 +26,30 @@ exports.imageview = function(req, res) {
     if(err) return error(res, 404, 'file not found');
     var pathname = url.parse(req.url).pathname;
     setHeader(res, pathname, meta);
-    if (isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
-    // TODO
+    if(isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
+    if(_.isEmpty(req.query)) return error(res, 404, 'miss request params');
+    var query = {}
+    query.w = req.query.w || null
+    query.h = req.query.h || null;
+    store.getFileCache(req.params.id, query, function(err, data) {
+      if(err) return error(res, 404, err);
+      res.setHeader('Content-Type', meta.mime);
+      res.statusCode = 200;
+      res.end(data);
+    });
   });
 }
 
 function setHeader(res, pathname, meta) {
   // TODO
   // if (!res.getHeader('Accept-Ranges')) res.setHeader('Accept-Ranges', 'bytes');
-  if (!res.getHeader('Date')) res.setHeader('Date', new Date().toUTCString());
-  if (!res.getHeader('Last-Modified')) res.setHeader('Last-Modified', meta.mtime.toUTCString());
-  if (!res.getHeader('ETag')) {
+  if(!res.getHeader('Date')) res.setHeader('Date', new Date().toUTCString());
+  if(!res.getHeader('Last-Modified')) res.setHeader('Last-Modified', meta.mtime.toUTCString());
+  /* remove etag setting, because can not know cache file's size
+  if(!res.getHeader('ETag')) {
     var tag = etag(pathname, meta);
     res.setHeader('ETag', tag);
-  }
+  } */
 }
 
 function etag(pathname, meta) {
