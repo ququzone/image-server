@@ -1,7 +1,7 @@
 {
   "name": "image-server",
-  "version": "0.0.2",
-  "description": "image server for website or mobile app backend.",
+  "version": "0.0.1",
+  "description": "image server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -21,12 +21,10 @@
   },
   "homepage": "https://github.com/ququzone/image-server",
   "dependencies": {
-    "express": "^4.3.0",
+    "connect": "^2.14.1",
     "underscore": "^1.6.0",
     "fresh": "^0.2.2",
     "buffer-crc32": "^0.2.1",
-    "gm": "^1.14.2",
-    "multiparty": "^3.2.6",
-    "node-uuid": "^1.4.1"
+    "gm": "^1.14.2"
   }
 }
