@@ -1,4 +1,5 @@
 var gm = require('gm')
+  , _ = require('underscore')
   , SSDB = require('./SSDB')
   , config = require('../config')
   , mime = require('../images/mime');
@@ -50,6 +51,8 @@ exports.getFileMeta = function(name, callback) {
   ssdb.multi_hget(key, ['mtime', 'size', 'mime'], function(err, data) {
     ssdb.close();
     if(err) return callback(err);
+    if(_.isEmpty(data)) return callback('file not exists');
+    console.log(data);
     var d = new Date()
     d.setTime(data.mtime.toString())
     data.mtime = d;

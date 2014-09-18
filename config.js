@@ -4,7 +4,7 @@ module.exports = {
   },
   ssdb: {
     host    : 'localhost',
-    port    : '9999',
+    port    : '8888',
     timeout : 1000,
     prefix  : 'image'
   }
