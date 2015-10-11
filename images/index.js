@@ -2,7 +2,6 @@ var _ = require('underscore')
   , crc32 = require('buffer-crc32').unsigned
   , fresh = require('fresh')
   , url = require('url')
-  , gm = require('gm')
   , mime = require('./mime')
   , store = require('../store');
 
