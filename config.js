@@ -1,11 +1,7 @@
 module.exports = {
-  image: {
-    prefix : '/images'
-  },
-  ssdb: {
-    host    : 'localhost',
-    port    : '8888',
-    timeout : 1000,
-    prefix  : 'image'
+  redis: {
+    host: 'image-server.redis.host',
+    port: 6379,
+    prefix: 'image'
   }
-}
+};
