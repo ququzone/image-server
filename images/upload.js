@@ -21,7 +21,7 @@ module.exports = function(req, res) {
       utils.writeJSON(res, {success: false, msg: 'empty file error.'});
       return;
     }
-    buffer = new Buffer(size);
+    var buffer = new Buffer(size);
     for (var i = 0, pos = 0, l = buffers.length; i < l; i++) {
       var chunk = buffers[i];
       chunk.copy(buffer, pos);

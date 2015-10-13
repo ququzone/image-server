@@ -1,32 +1,37 @@
 var gm = require('gm')
   , _ = require('underscore')
-  , SSDB = require('./SSDB')
+  , Redis = require('./redis')
   , config = require('../config')
   , mime = require('../images/mime');
 
 function getFileKey(name) {
-  return config.ssdb.prefix + ':file:' + name;
+  return config.redis.prefix + ':file:' + name;
 }
 
 function getCacheKey(name) {
-  return config.ssdb.prefix + ':cache:' + name;
+  return config.redis.prefix + ':cache:' + name;
 }
 
 exports.addFile = function(name, file, callback) {
   gm(file).identify(function(err, data) {
     if(err) return callback('image file error');
     var contentType = mime.types[data.format.toLowerCase()] || mime.default;
-    var ssdb = SSDB.connect(config.ssdb.host, config.ssdb.port, config.ssdb.timeout);
     var key = getFileKey(name);
-    ssdb.hsize(key, function(err, size) {
-      if(err || size !== 0) {
-        ssdb.close();
-        return callback('file already exists');
-      }
-      ssdb.multi_hset(
-        key, 
+    var redis = Redis.get();
+
+    redis.exists(key, function(err, result) {
+      if(err) {
+        redis.quit();
+        return callback('redis server error');
+      };
+      if (result === 1) {
+        redis.quit();
+        return callback('file already exists')
+      };
+      redis.hmset(
+        key,
         {
-          mtime: new Date().getTime(),
+          mtime: new Date().toUTCString(),
           size: file.length,
           width: data.size.width,
           height: data.size.height,
@@ -34,74 +39,75 @@ exports.addFile = function(name, file, callback) {
           data: file
         },
         function(err) {
-          ssdb.close();
-          if(err) {
-            return callback('set file to ssdb error');
-          }
+          redis.quit();
+          if (err) {return callback('store image file error')};
           return callback(null);
         }
       );
     });
   });
-}
+};
 
 exports.getFileMeta = function(name, callback) {
-  var ssdb = SSDB.connect(config.ssdb.host, config.ssdb.port, config.ssdb.timeout);
+  var redis = Redis.get();
   var key = getFileKey(name);
-  ssdb.multi_hget(key, ['mtime', 'size', 'mime'], function(err, data) {
-    ssdb.close();
+  redis.hmget(key, ['mtime', 'size', 'mime'], function(err, data) {
+    redis.quit();
     if(err) return callback(err);
     if(_.isEmpty(data)) return callback('file not exists');
-    console.log(data);
-    var d = new Date()
-    d.setTime(data.mtime.toString())
-    data.mtime = d;
-    data.size = data.size.toString();
-    data.mime = data.mime.toString();
-    callback(null, data);
+    var result = {
+      mtime: data[0],
+      size: data[1],
+      mime: data[2]
+    };
+    callback(null, result);
   });
-}
+};
 
 exports.getFile = function(name, callback) {
-  var ssdb = SSDB.connect(config.ssdb.host, config.ssdb.port, config.ssdb.timeout);
+  var redis = Redis.get();
   var key = getFileKey(name);
-  ssdb.hget(key, 'data', function(err, data) {
-    ssdb.close();
+  redis.hgetBuffer(key, 'data', function(err, data) {
+    redis.quit();
     if(err) return callback(err);
     callback(null, data);
   });
-}
+};
 
 exports.getFileCache = function(name, query, callback) {
-  var ssdb = SSDB.connect(config.ssdb.host, config.ssdb.port, config.ssdb.timeout);
+  var redis = Redis.get();
   var hname = getCacheKey(name);
   var key = 'w/' + query.w + '/h/' + query.h;
-  ssdb.hget(hname, key, function(err, data) {
-    if(err) {
-      ssdb.hget(getFileKey(name), 'data', function(err, originData) {
+  redis.hgetBuffer(hname, key, function(err, data) {
+    if (err) {
+      redis.quit();
+      return callback('fetch file from redis error');
+    }
+    if (data) {
+      redis.quit();
+      return callback(null, data);
+    } else {
+      redis.hgetBuffer(getFileKey(name), 'data', function(err, originData) {
         if(err) {
-          ssdb.close();
+          redis.quit();
           return callback('file not found');
         }
         gm(originData)
         .resize(query.w, query.h)
         .toBuffer(function(err, buffer) {
           if(err) {
-            ssdb.close();
+            redis.quit();
             return callback('file resize error');
           }
-          ssdb.hset(hname, key, buffer, function(err) {
-            ssdb.close();
+          redis.hset(hname, key, buffer, function(err) {
+            redis.quit();
             if(err) {
-              return callback('set file to ssdb error');
+              return callback('set file to redis error');
             }
             return callback(null, buffer);
           });
         });
       });
-    } else {
-      ssdb.close();
-      return callback(null, data);
     }
   });
-}
+};

@@ -43,7 +43,7 @@ function setHeader(res, pathname, meta) {
   // TODO
   // if (!res.getHeader('Accept-Ranges')) res.setHeader('Accept-Ranges', 'bytes');
   if(!res.getHeader('Date')) res.setHeader('Date', new Date().toUTCString());
-  if(!res.getHeader('Last-Modified')) res.setHeader('Last-Modified', meta.mtime.toUTCString());
+  if(!res.getHeader('Last-Modified')) res.setHeader('Last-Modified', meta.mtime);
   /* remove etag setting, because can not know cache file's size
   if(!res.getHeader('ETag')) {
     var tag = etag(pathname, meta);
