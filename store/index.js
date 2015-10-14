@@ -28,22 +28,18 @@ exports.addFile = function(name, file, callback) {
         redis.quit();
         return callback('file already exists')
       };
-      redis.hmset(
-        key,
-        {
-          mtime: new Date().toUTCString(),
-          size: file.length,
-          width: data.size.width,
-          height: data.size.height,
-          mime: contentType,
-          data: file
-        },
-        function(err) {
-          redis.quit();
-          if (err) {return callback('store image file error')};
-          return callback(null);
-        }
-      );
+      redis.multi().hmset(key, {
+        mtime: new Date().toUTCString(),
+        size: file.length,
+        width: data.size.width,
+        height: data.size.height,
+        mime: contentType,
+        data: file
+      }).lpush(config.redis.prefix + ':all',name).exec(function(err) {
+        redis.quit();
+        if (err) {return callback('store image file error')};
+        return callback(null);
+      });
     });
   });
 };

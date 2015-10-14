@@ -18,7 +18,7 @@ exports.get = function(req, res) {
       res.end(file);
     });
   });
-}
+};
 
 exports.imageview = function(req, res) {
   store.getFileMeta(req.params.id, function(err, meta) {
@@ -37,7 +37,7 @@ exports.imageview = function(req, res) {
       res.end(data);
     });
   });
-}
+};
 
 function setHeader(res, pathname, meta) {
   // TODO
