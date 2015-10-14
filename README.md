@@ -34,7 +34,7 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 1. 上传图片
 	
 	在浏览器中打开 `http://localhost:3000/image` 上传图片
-	也可以使用 `HttpClient` 直接上传图片，放回Json数据中包含上传成功后的唯一ID
+	也可以使用 `HttpClient` 直接上传图片，返回Json数据中包含上传成功后的唯一ID
 	
 2. 查看原图
 
