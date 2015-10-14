@@ -1,40 +1,72 @@
-var multiparty = require('multiparty')
-  , uuid = require('node-uuid')
-  , utils = require('./utils')
+var uuid = require('node-uuid')
+  , Q = require('q')
+  , parse = require('co-busboy')
   , store = require('../store');
 
-module.exports = function(req, res) {
-  var form = new multiparty.Form();
-  form.on('error', function() {
-    utils.writeJSON(res, {success: false, msg: 'upload file fail.'});
+module.exports = function *() {
+  var ctx = this;
+  var parts = parse(this, {
+    autoFields: true
   });
-  var size = 0, buffers = [];
-  form.on('part', function(part) {
-    if (!part.filename) return;
-    part.on('data', function(chunk) {
-      buffers.push(chunk);
-      size += chunk.length;
-    });
-  });
-  form.on('close', function() {
-    if(buffers.length < 1) {
-      utils.writeJSON(res, {success: false, msg: 'empty file error.'});
+  var file = yield parts;
+  if (file) {
+    var id = uuid.v4();
+    yield addFile(ctx, id, file);
+  } else {
+    ctx.set('Content-Type', 'application/json');
+    ctx.body = {success: false, msg: 'no file found.'};
+  }
+};
+
+function addFile(ctx, id, file) {
+  var deferred = Q.defer();
+  streamToUnemptyBuffer(file, function(err, buffer) { 
+    if(err) {
+      ctx.set('Content-Type', 'application/json');
+      ctx.body = {success: false, msg: 'read file data error.'};
+      deferred.resolve();
       return;
-    }
-    var buffer = new Buffer(size);
-    for (var i = 0, pos = 0, l = buffers.length; i < l; i++) {
-      var chunk = buffers[i];
-      chunk.copy(buffer, pos);
-      pos += chunk.length;
-    }
-    var id = uuid.v4(); 
+    };
     store.addFile(id, buffer, function(err) {
+      ctx.set('Content-Type', 'application/json');
       if(err) {
-        utils.writeJSON(res, {success: false, msg: err});
-        return;
+        ctx.body = {success: false, msg: 'find file from db error.'};
+      } else {
+        ctx.body = {success: true, id: id};
       }
-      utils.writeJSON(res, {success: true, id: id});
+      deferred.resolve();
     });
   });
-  form.parse(req);
+  return deferred.promise;
+};
+
+function streamToUnemptyBuffer(stream, callback) {
+  var done = false;
+  var buffers = [];
+
+  stream.on('data', function (data) {
+    buffers.push(data)
+  });
+
+  stream.on('end', function () {
+    var result, err;
+    if (done)
+      return;
+
+    done = true;
+    result = Buffer.concat(buffers);
+    buffers = null;
+    if (result.length==0) {
+      err = new Error("Stream yields empty buffer"); 
+      callback(err, null);
+    } else {
+      callback(null, result);
+    }
+  });
+
+  stream.on('error', function (err) {
+    done = true;
+    buffers = null;
+    callback(err);
+  });
 };

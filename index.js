@@ -1,26 +1,28 @@
-var express = require('express')
+var koa = require('koa')
+  , route = require('koa-route')
+  , logger = require('koa-logger')
   , images = require('./images')
   , upload = require('./images/upload');
 
-var app = express();
+var app = koa();
 
-app.get('/', function (req, res) {
-  res.end('hello, image server.');
-});
+app.use(logger());
 
-app.get('/image/:id', images.get);
+app.use(route.get('/', function *() {
+  this.body = 'hello, image server.';
+}));
 
-app.get('/image/:id/view', images.imageview);
+app.use(route.get('/image/:id', images.get));
+app.use(route.get('/image/:id/view', images.imageview));
 
-app.get('/image', function (req, res) {
-  res.send('<form method="post" enctype="multipart/form-data" action="/image">'
+app.use(route.get('/image', function *() {
+  this.body = '<form method="post" enctype="multipart/form-data" action="/image">'
     + '<p>Image: <input type="file" name="image" /></p>'
     + '<p><input type="submit" value="Upload" /></p>'
-    + '</form>');
-});
+    + '</form>';
+}));
 
-app.post('/image', upload);
+app.use(route.post('/image', upload));
 
-var server = app.listen(3000, function () {
-  console.log('Listening on port %d', server.address().port);
-});
+app.listen(process.env.PORT || 3000);
+console.log('listening on port ' + (process.env.PORT || 3000));

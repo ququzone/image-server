@@ -1,14 +1,14 @@
 {
   "name": "image-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "image server for website or mobile app backend.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ququzone/image-server"
+  },
+  "scripts": {
+    "start": "node index.js"
   },
   "keywords": [
     "image server",
@@ -22,12 +22,14 @@
   "homepage": "https://github.com/ququzone/image-server",
   "dependencies": {
     "buffer-crc32": "^0.2.1",
-    "express": "^4.3.0",
-    "fresh": "^0.2.2",
+    "co-busboy": "^1.3.1",
     "gm": "^1.14.2",
     "ioredis": "^1.9.1",
-    "multiparty": "^3.2.6",
+    "koa": "^1.1.0",
+    "koa-logger": "^1.3.0",
+    "koa-route": "^2.4.2",
     "node-uuid": "^1.4.1",
+    "q": "^1.4.1",
     "underscore": "^1.6.0"
   }
 }

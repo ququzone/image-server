@@ -1,23 +1,41 @@
 var _ = require('underscore')
+  , co = require('co')
+  , Q = require('q')
   , crc32 = require('buffer-crc32').unsigned
-  , fresh = require('fresh')
-  , url = require('url')
   , mime = require('./mime')
   , store = require('../store');
 
-exports.get = function(req, res) {
-  store.getFileMeta(req.params.id, function(err, meta) {
-    if(err) return error(res, 404, 'file not found');
-    var pathname = url.parse(req.url).pathname;
-    setHeader(res, pathname, meta);
-    if(isConditionalGET(req) && fresh(req.headers, res._headers)) return notModified(res);
-    store.getFile(req.params.id, function(err, file) {
-      if(err) return error(res, 500, 'file error');
-      res.setHeader('Content-Type', meta.mime);
-      res.statusCode = 200;
-      res.end(file);
+exports.get = function *(id) {
+  var ctx = this;
+  yield get(ctx, id);
+};
+
+function get(ctx, id) {
+  var deferred = Q.defer();  
+  store.getFileMeta(id, function(err, meta) {
+    if(err) {
+      ctx.set('Content-Type', 'application/json');
+      ctx.throw(404, {success: false, msg: 'no file found.'});
+      deferred.resolve();
+      return;
+    }
+    if(ctx.fresh) {
+      ctx.res.status=304;
+      deferred.resolve();
+      return;
+    }
+    store.getFile(id, function(err, file) {
+      if(err) {
+        ctx.set('Content-Type', 'application/json');
+        ctx.throw(500, {success: false, msg: 'file error.'});
+      } else {
+        ctx.set('Content-Type', meta.mime);
+        ctx.body = file;
+      }
+      deferred.resolve();
     });
   });
+  return deferred.promise;
 };
 
 exports.imageview = function(req, res) {
@@ -39,7 +57,7 @@ exports.imageview = function(req, res) {
   });
 };
 
-function setHeader(res, pathname, meta) {
+function setHeader(res, meta) {
   // TODO
   // if (!res.getHeader('Accept-Ranges')) res.setHeader('Accept-Ranges', 'bytes');
   if(!res.getHeader('Date')) res.setHeader('Date', new Date().toUTCString());
@@ -73,9 +91,4 @@ function removeContentHeaderFields(res) {
       res.removeHeader(k);
     }
   });
-}
-
-function error(res, code, msg) {
-  res.statusCode = code;
-  res.end(msg);
 }
