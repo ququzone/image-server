@@ -20,8 +20,8 @@ module.exports = function *() {
 
 function addFile(ctx, id, file) {
   var deferred = Q.defer();
-  streamToUnemptyBuffer(file, function(err, buffer) { 
-    if(err) {
+  streamToUnemptyBuffer(file, function(err, buffer) {
+    if (err) {
       ctx.set('Content-Type', 'application/json');
       ctx.body = {success: false, msg: 'read file data error.'};
       deferred.resolve();
@@ -29,7 +29,7 @@ function addFile(ctx, id, file) {
     };
     store.addFile(id, buffer, function(err) {
       ctx.set('Content-Type', 'application/json');
-      if(err) {
+      if (err) {
         ctx.body = {success: false, msg: 'find file from db error.'};
       } else {
         ctx.body = {success: true, id: id};
@@ -57,7 +57,7 @@ function streamToUnemptyBuffer(stream, callback) {
     result = Buffer.concat(buffers);
     buffers = null;
     if (result.length==0) {
-      err = new Error("Stream yields empty buffer"); 
+      err = new Error("Stream yields empty buffer");
       callback(err, null);
     } else {
       callback(null, result);

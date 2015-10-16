@@ -14,13 +14,13 @@ function getCacheKey(name) {
 
 exports.addFile = function(name, file, callback) {
   gm(file).identify(function(err, data) {
-    if(err) return callback('image file error');
+    if (err) return callback('image file error');
     var contentType = mime.types[data.format.toLowerCase()] || mime.default;
     var key = getFileKey(name);
     var redis = Redis.get();
 
     redis.exists(key, function(err, result) {
-      if(err) {
+      if (err) {
         redis.quit();
         return callback('redis server error');
       };
@@ -49,8 +49,8 @@ exports.getFileMeta = function(name, callback) {
   var key = getFileKey(name);
   redis.hmget(key, ['mtime', 'size', 'mime'], function(err, data) {
     redis.quit();
-    if(err) return callback(err);
-    if(_.isEmpty(data)) return callback('file not exists');
+    if (err) return callback(err);
+    if (_.isEmpty(data)) return callback('file not exists');
     var result = {
       mtime: data[0],
       size: data[1],
@@ -84,20 +84,20 @@ exports.getFileCache = function(name, query, callback) {
       return callback(null, data);
     } else {
       redis.hgetBuffer(getFileKey(name), 'data', function(err, originData) {
-        if(err) {
+        if (err) {
           redis.quit();
           return callback('file not found');
         }
         gm(originData)
         .resize(query.w, query.h)
         .toBuffer(function(err, buffer) {
-          if(err) {
+          if (err) {
             redis.quit();
             return callback('file resize error');
           }
           redis.hset(hname, key, buffer, function(err) {
             redis.quit();
-            if(err) {
+            if (err) {
               return callback('set file to redis error');
             }
             return callback(null, buffer);
