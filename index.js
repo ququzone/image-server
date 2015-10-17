@@ -1,6 +1,7 @@
 var koa = require('koa')
   , route = require('koa-route')
   , logger = require('koa-logger')
+  , views = require('co-views')
   , images = require('./images')
   , upload = require('./images/upload');
 
@@ -8,8 +9,17 @@ var app = koa();
 
 app.use(logger());
 
+var render = views(__dirname + '/views', {
+  ext: 'jade'
+});
+
+app.use(function* (next) {
+  this.render = render;
+  yield next;
+});
+
 app.use(route.get('/', function *() {
-  this.body = 'hello, image server.';
+  this.body = yield this.render('index');
 }));
 
 app.use(route.get('/image/:id', images.get));

@@ -56,7 +56,7 @@ function streamToUnemptyBuffer(stream, callback) {
     done = true;
     result = Buffer.concat(buffers);
     buffers = null;
-    if (result.length==0) {
+    if (result.length == 0) {
       err = new Error("Stream yields empty buffer");
       callback(err, null);
     } else {

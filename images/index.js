@@ -19,12 +19,12 @@ function get(ctx, id) {
       return;
     }
     if (ctx.fresh) {
-      ctx.res.status=304;
+      ctx.res.status = 304;
       deferred.resolve();
       return;
     }
     store.getFile(id, function(err, file) {
-      if(err) {
+      if (err) {
         ctx.set('Content-Type', 'application/json');
         ctx.throw(500, {success: false, msg: 'file error.'});
       } else {
