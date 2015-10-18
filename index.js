@@ -26,10 +26,7 @@ app.use(route.get('/image/:id', images.get));
 app.use(route.get('/image/:id/view', images.imageview));
 
 app.use(route.get('/image', function *() {
-  this.body = '<form method="post" enctype="multipart/form-data" action="/image">'
-    + '<p>Image: <input type="file" name="image" /></p>'
-    + '<p><input type="submit" value="Upload" /></p>'
-    + '</form>';
+  this.body = yield this.render('upload');
 }));
 
 app.use(route.post('/image', upload));

@@ -1,0 +1,11 @@
+doctype html
+html(lang="en")
+  head
+    title Upload Image
+  body
+    form(method="post", enctype="multipart/form-data", action="/image")
+      p
+        label Image
+        input(type="file", name="image")
+      p
+        input(type="submit", value="Upload")
