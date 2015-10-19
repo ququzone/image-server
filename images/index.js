@@ -1,5 +1,7 @@
 var _ = require('underscore')
   , Q = require('q')
+  , Canvas = require('canvas'),
+  , smartcrop = require('./smartcrop')
   , crc32 = require('buffer-crc32').unsigned
   , mime = require('./mime')
   , store = require('../store');
@@ -15,11 +17,6 @@ function get(ctx, id) {
     if (err) {
       ctx.set('Content-Type', 'application/json');
       ctx.throw(404, {success: false, msg: 'no file found.'});
-      deferred.resolve();
-      return;
-    }
-    if (ctx.fresh) {
-      ctx.res.status = 304;
       deferred.resolve();
       return;
     }
@@ -81,6 +78,40 @@ function imageview(ctx, id) {
       deferred.resolve();
     });
   });
+  return deferred.promise;
+};
+
+exports.smart = function *() {
+  var ctx = this;
+  yield smart(ctx, id);
+};
+
+function smart() {
+  var deferred = Q.defer();
+  store.getFileMeta(id, function(err, meta) {
+    if (err) {
+      ctx.set('Content-Type', 'application/json');
+      ctx.throw(404, {success: false, msg: 'no file found.'});
+      deferred.resolve();
+      return;
+    }
+    store.getFile(id, function(err, file) {
+      if (err) {
+        ctx.set('Content-Type', 'application/json');
+        ctx.throw(500, {success: false, msg: 'file error.'});
+      } else {
+        var img = new Canvas.Image();
+        
+      }
+      deferred.resolve();
+    });
+  })
+
+
+
+
+
+  SmartCrop.crop(image, {width: 100, height: 100}, function(result){console.log(result);});
   return deferred.promise;
 };
 

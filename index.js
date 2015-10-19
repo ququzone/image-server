@@ -22,14 +22,14 @@ app.use(route.get('/', function *() {
   this.body = yield this.render('index');
 }));
 
-app.use(route.get('/image/:id', images.get));
-app.use(route.get('/image/:id/view', images.imageview));
-
 app.use(route.get('/image', function *() {
   this.body = yield this.render('upload');
 }));
-
 app.use(route.post('/image', upload));
+
+app.use(route.get('/image/:id', images.get));
+app.use(route.get('/image/:id/view', images.imageview));
+app.use(route.get('/images/:id/smart', images.smart));
 
 app.listen(process.env.PORT || 3000);
 console.log('listening on port ' + (process.env.PORT || 3000));
