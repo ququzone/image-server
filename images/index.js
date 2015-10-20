@@ -1,11 +1,9 @@
 var _ = require('underscore')
   , Q = require('q')
-  , Canvas = require('canvas')
-  , smartcrop = require('./smartcrop')
   , crc32 = require('buffer-crc32').unsigned
-  , mime = require('./mime')
-  , store = require('../store')
-  , utils = require('./utils');
+  , mime = require('../lib/mime')
+  , utils = require('../lib/utils')
+  , store = require('../store');
 
 exports.get = function *(id) {
   var ctx = this;
@@ -60,8 +58,8 @@ function imageview(ctx, id) {
       deferred.resolve();
       return;
     }
-    var query = {}
-    query.w = ctx.query.w || null
+    var query = {};
+    query.w = ctx.query.w || null;
     query.h = ctx.query.h || null;
     store.getFileCache(id, query, function(err, data) {
       if (err) {
@@ -96,34 +94,34 @@ function smart(ctx, id) {
       deferred.resolve();
       return;
     }
-    store.getFile(id, function(err, file) {
+    var query = {};
+    if (ctx.query.w && ctx.query.h) {
+      query.w = ctx.query.w;
+      query.h = ctx.query.h;
+    } else if (ctx.query.w && !ctx.query.h) {
+      query.w = ctx.query.w;
+      query.h = ctx.query.w;
+    } else if (ctx.query.h && !ctx.query.w) {
+      query.w = ctx.query.h;
+      query.h = ctx.query.h;
+    } else {
+      query.w = 300;
+      query.h = 300;
+    }
+    store.getSmartFile(id, query, function(err, data) {
       if (err) {
         ctx.set('Content-Type', 'application/json');
-        ctx.throw(500, {success: false, msg: 'file error.'});
-        deferred.resolve();
+        ctx.throw(404, {success: false, msg: 'no file found.'});
       } else {
-        var img = new Canvas.Image()
-          , options = _.extend({canvasFactory: function(w, h){ return new Canvas(w, h); }}, {width:300, height:200});
-        img.src = file;
-        smartcrop.crop(img, options, function(result){
-          var canvas = new Canvas(options.width, options.height)
-            , context = canvas.getContext('2d')
-            , crop = result.topCrop;
-          context.patternQuality = 'best';
-          context.filter = 'best';
-          context.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
-          utils.streamToUnemptyBuffer(canvas.syncJPEGStream({quality: 90}), function(err, data) {
-            if (err) {
-              ctx.set('Content-Type', 'application/json');
-              ctx.throw(500, {success: false, msg: 'file error.'});
-            } else {
-              ctx.set('Content-Type', meta.mime);
-              ctx.body = data;
-            }
-            deferred.resolve();
-          });
-        });
+        setCacheHeader(ctx, meta, data);
+        if (ctx.fresh) {
+          ctx.status = 304;
+        } else {
+          ctx.set('Content-Type', meta.mime);
+          ctx.body = data;
+        }
       }
+      deferred.resolve();
     });
   });
   return deferred.promise;

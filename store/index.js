@@ -1,8 +1,11 @@
 var gm = require('gm')
   , _ = require('underscore')
-  , Redis = require('./redis')
+  , Canvas = require('canvas')
+  , smartcrop = require('../lib/smartcrop')
+  , mime = require('../lib/mime')
+  , utils = require('../lib/utils')
   , config = require('../config')
-  , mime = require('../images/mime');
+  , Redis = require('./redis');
 
 function getFileKey(name) {
   return config.redis.prefix + ':file:' + name;
@@ -10,6 +13,10 @@ function getFileKey(name) {
 
 function getCacheKey(name) {
   return config.redis.prefix + ':cache:' + name;
+}
+
+function getSmartKey(name) {
+  return config.redis.prefix + ':smart:' + name;
 }
 
 exports.addFile = function(name, file, callback) {
@@ -101,6 +108,54 @@ exports.getFileCache = function(name, query, callback) {
               return callback('set file to redis error');
             }
             return callback(null, buffer);
+          });
+        });
+      });
+    }
+  });
+};
+
+exports.getSmartFile = function(name, query, callback) {
+  var redis = Redis.get();
+  var hname = getSmartKey(name);
+  var key = 'w/' + query.w + '/h/' + query.h;
+  redis.hgetBuffer(hname, key, function(err, data) {
+    if (err) {
+      redis.quit();
+      return callback('fetch file from redis error');
+    }
+    if (data) {
+      redis.quit();
+      return callback(null, data);
+    } else {
+      redis.hgetBuffer(getFileKey(name), 'data', function(err, originData) {
+        if (err) {
+          redis.quit();
+          return callback('file not found');
+        }
+        var img = new Canvas.Image()
+          , options = _.extend({canvasFactory: function(w, h){ return new Canvas(w, h); }}, {width:parseInt(query.w), height:parseInt(query.h)});
+        img.src = originData;
+        smartcrop.crop(img, options, function(result) {
+          var canvas = new Canvas(options.width, options.height)
+            , context = canvas.getContext('2d')
+            , crop = result.topCrop;
+          context.patternQuality = 'best';
+          context.filter = 'best';
+          context.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+          utils.streamToUnemptyBuffer(canvas.syncJPEGStream({quality: 90}), function(err, cropData) {
+            if (err) {
+              redis.quit();
+              return callback('file crop error.');
+            } else {
+              redis.hset(hname, key, cropData, function(err) {
+                redis.quit();
+                if (err) {
+                  return callback('set file to redis error');
+                }
+                return callback(null, cropData);
+              });
+            }
           });
         });
       });

@@ -1,8 +1,8 @@
 var uuid = require('node-uuid')
   , Q = require('q')
   , parse = require('co-busboy')
-  , store = require('../store')
-  , utils = require('./utils');
+  , utils = require('../lib/utils')
+  , store = require('../store');
 
 module.exports = function *() {
   var ctx = this;
