@@ -1,10 +1,11 @@
 var _ = require('underscore')
   , Q = require('q')
-  , Canvas = require('canvas'),
+  , Canvas = require('canvas')
   , smartcrop = require('./smartcrop')
   , crc32 = require('buffer-crc32').unsigned
   , mime = require('./mime')
-  , store = require('../store');
+  , store = require('../store')
+  , utils = require('./utils');
 
 exports.get = function *(id) {
   var ctx = this;
@@ -81,12 +82,12 @@ function imageview(ctx, id) {
   return deferred.promise;
 };
 
-exports.smart = function *() {
+exports.smart = function *(id) {
   var ctx = this;
   yield smart(ctx, id);
 };
 
-function smart() {
+function smart(ctx, id) {
   var deferred = Q.defer();
   store.getFileMeta(id, function(err, meta) {
     if (err) {
@@ -99,19 +100,32 @@ function smart() {
       if (err) {
         ctx.set('Content-Type', 'application/json');
         ctx.throw(500, {success: false, msg: 'file error.'});
+        deferred.resolve();
       } else {
-        var img = new Canvas.Image();
-        
+        var img = new Canvas.Image()
+          , options = _.extend({canvasFactory: function(w, h){ return new Canvas(w, h); }}, {width:300, height:200});
+        img.src = file;
+        smartcrop.crop(img, options, function(result){
+          var canvas = new Canvas(options.width, options.height)
+            , context = canvas.getContext('2d')
+            , crop = result.topCrop;
+          context.patternQuality = 'best';
+          context.filter = 'best';
+          context.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+          utils.streamToUnemptyBuffer(canvas.syncJPEGStream({quality: 90}), function(err, data) {
+            if (err) {
+              ctx.set('Content-Type', 'application/json');
+              ctx.throw(500, {success: false, msg: 'file error.'});
+            } else {
+              ctx.set('Content-Type', meta.mime);
+              ctx.body = data;
+            }
+            deferred.resolve();
+          });
+        });
       }
-      deferred.resolve();
     });
-  })
-
-
-
-
-
-  SmartCrop.crop(image, {width: 100, height: 100}, function(result){console.log(result);});
+  });
   return deferred.promise;
 };
 
