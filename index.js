@@ -1,6 +1,7 @@
 var koa = require('koa')
   , route = require('koa-route')
   , logger = require('koa-logger')
+  , serve = require('koa-static-folder')
   , views = require('co-views')
   , images = require('./images')
   , upload = require('./images/upload');
@@ -8,6 +9,7 @@ var koa = require('koa')
 var app = koa();
 
 app.use(logger());
+app.use(serve('./assets'));
 
 var render = views(__dirname + '/views', {
   ext: 'jade'

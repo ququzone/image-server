@@ -1,11 +1,11 @@
-doctype html
-html(lang="en")
-  head
+extends ./tpl/layout.jade
+
+block title
     title Upload Image
-  body
-    form(method="post", enctype="multipart/form-data", action="/image")
-      p
-        label Image
-        input(type="file", name="image")
-      p
-        input(type="submit", value="Upload")
+block content
+  form(method="post", enctype="multipart/form-data", action="/image")
+    p
+      label Image
+      input(type="file", name="image")
+    p
+      input(type="submit", value="Upload")
