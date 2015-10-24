@@ -3,6 +3,7 @@ var koa = require('koa')
   , logger = require('koa-logger')
   , serve = require('koa-static-folder')
   , views = require('co-views')
+  , admin = require('./admin')
   , images = require('./images')
   , upload = require('./images/upload');
 
@@ -20,9 +21,7 @@ app.use(function* (next) {
   yield next;
 });
 
-app.use(route.get('/', function *() {
-  this.body = yield this.render('index');
-}));
+app.use(route.get('/', admin.index));
 
 app.use(route.get('/image', function *() {
   this.body = yield this.render('upload');
