@@ -1,6 +1,7 @@
 var Q = require('q')
   , _ = require('underscore')
-  , store = require('../store')
+  , jade = require('jade')
+  , store = require('../store');
 
 exports.index = function *() {
   yield function(ctx) {
@@ -10,7 +11,7 @@ exports.index = function *() {
         ctx.set('Content-Type', 'text/plain');
         ctx.throw(500, 'redis server error');
       } else if (_.isEmpty(user)) {
-        ctx.redirect('/install');
+        ctx.body = ctx.jade('install.jade');
       } else {
         ctx.redirect('/');
       }

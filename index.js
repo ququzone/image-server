@@ -3,6 +3,7 @@ var koa = require('koa')
   , logger = require('koa-logger')
   , serve = require('koa-static-folder')
   , views = require('co-views')
+  , jade = require('jade')
   , admin = require('./admin')
   , images = require('./images')
   , upload = require('./images/upload');
@@ -18,6 +19,7 @@ var render = views(__dirname + '/views', {
 
 app.use(function* (next) {
   this.render = render;
+  this.jade = view => jade.renderFile(__dirname + '/views/' + view);
   yield next;
 });
 
