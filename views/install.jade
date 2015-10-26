@@ -41,8 +41,8 @@ block content
     form.form-signin(method="post", action="/install")
       h2.form-signin-heading Create Admin Account
       label.sr-only Email address
-      input(type="text", class="form-control", placeholder="Username" required autofocus)
+      input(type="text", name="username" class="form-control", placeholder="Username" required autofocus)
       span.help-block create new account for manage image server.
       label.sr-only Password
-      input(type="password", class="form-control", placeholder="Password" required)
+      input(type="password", name="password", class="form-control", placeholder="Password" required)
       button(class="btn btn-lg btn-primary btn-block", type="submit") Create...

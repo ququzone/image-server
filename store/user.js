@@ -7,3 +7,8 @@ exports.getUser = function(callback) {
     return callback(err, user);
   });
 };
+
+exports.addUser = (user, callback) => {
+  var redis = Redis.get();
+  redis.hmset(config.redis.prefix + ':user', user, err => callback(err));
+};

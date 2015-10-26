@@ -7,3 +7,4 @@ exports.getFile = image.getFile;
 exports.getFileCache = image.getFileCache;
 exports.getSmartFile = image.getSmartFile;
 exports.getUser = user.getUser;
+exports.addUser = user.addUser;

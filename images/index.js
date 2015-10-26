@@ -15,14 +15,16 @@ function get(ctx, id) {
   store.getFileMeta(id, function(err, meta) {
     if (err) {
       ctx.set('Content-Type', 'application/json');
-      ctx.throw(404, {success: false, msg: 'no file found.'});
+      ctx.status = 400;
+      ctx.body = {success: false, msg: 'no file found.'};
       deferred.resolve();
       return;
     }
     store.getFile(id, function(err, file) {
       if (err) {
         ctx.set('Content-Type', 'application/json');
-        ctx.throw(500, {success: false, msg: 'file error.'});
+        ctx.status = 500;
+        ctx.body = {success: false, msg: 'file error.'};
       } else {
         setCacheHeader(ctx, meta, file);
         if (ctx.fresh) {
@@ -48,13 +50,15 @@ function imageview(ctx, id) {
   store.getFileMeta(id, function(err, meta) {
     if (err) {
       ctx.set('Content-Type', 'application/json');
-      ctx.throw(404, {success: false, msg: 'no file found.'});
+      ctx.status = 404;
+      ctx.body = {success: false, msg: 'no file found.'};
       deferred.resolve();
       return;
     }
     if (_.isEmpty(ctx.query)) {
       ctx.set('Content-Type', 'application/json');
-      ctx.throw(404, {success: false, msg: 'miss request params.'});
+      ctx.status = 400;
+      ctx.body = {success: false, msg: 'miss request params.'};
       deferred.resolve();
       return;
     }
@@ -64,7 +68,8 @@ function imageview(ctx, id) {
     store.getFileCache(id, query, function(err, data) {
       if (err) {
         ctx.set('Content-Type', 'application/json');
-        ctx.throw(404, {success: false, msg: 'no file found.'});
+        ctx.status = 404;
+        ctx.body = {success: false, msg: 'no file found.'};
       } else {
         setCacheHeader(ctx, meta, data);
         if (ctx.fresh) {
@@ -90,7 +95,8 @@ function smart(ctx, id) {
   store.getFileMeta(id, function(err, meta) {
     if (err) {
       ctx.set('Content-Type', 'application/json');
-      ctx.throw(404, {success: false, msg: 'no file found.'});
+      ctx.status = 404;
+      ctx.body = {success: false, msg: 'no file found.'};
       deferred.resolve();
       return;
     }
@@ -111,7 +117,8 @@ function smart(ctx, id) {
     store.getSmartFile(id, query, function(err, data) {
       if (err) {
         ctx.set('Content-Type', 'application/json');
-        ctx.throw(404, {success: false, msg: 'no file found.'});
+        ctx.status = 404;
+        ctx.body = {success: false, msg: 'no file found.'};
       } else {
         setCacheHeader(ctx, meta, data);
         if (ctx.fresh) {

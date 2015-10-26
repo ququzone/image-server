@@ -24,6 +24,7 @@ app.use(function* (next) {
 });
 
 app.use(route.get('/', admin.index));
+app.use(route.post('/install', admin.install));
 
 app.use(route.get('/image', function *() {
   this.body = yield this.render('upload');
