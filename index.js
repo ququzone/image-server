@@ -24,6 +24,7 @@ app.use(function* (next) {
 });
 
 app.use(route.get('/', admin.index));
+app.use(route.get('/install', admin.installPage));
 app.use(route.post('/install', admin.install));
 
 app.use(route.get('/image', function *() {

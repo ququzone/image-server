@@ -57,7 +57,11 @@ exports.getFileMeta = function(name, callback) {
   redis.hmget(key, ['mtime', 'size', 'mime'], function(err, data) {
     redis.quit();
     if (err) return callback(err);
-    if (_.isEmpty(data)) return callback('file not exists');
+    for (var i = 0; i < data.length; i++) {
+      if (data[i] === null) {
+        return callback('file not exists');
+      }
+    }
     var result = {
       mtime: data[0],
       size: data[1],

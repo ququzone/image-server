@@ -14,7 +14,7 @@ exports.index = function *() {
         ctx.status = 500;
         ctx.body = 'redis server error.';
       } else if (_.isEmpty(user)) {
-        ctx.body = ctx.jade('install.jade');
+        ctx.redirect('/install');
       } else {
         ctx.body = ctx.jade('index.jade');
       }
@@ -22,6 +22,10 @@ exports.index = function *() {
     });
     return deferred.promise;
   }(this);
+};
+
+exports.installPage = function *() {
+  this.body = this.jade('install.jade');
 };
 
 exports.install = function *() {
