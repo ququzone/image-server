@@ -1,4 +1,34 @@
 extends ./tpl/layout.jade
 
 block content
-  h1 Hello, Image Server.
+  .container
+    .image-header
+      h1 Image Server
+      hr
+    #images.row
+    .image-footer.text-center
+      a#load-image(href="javascript:void(0)") Load image
+
+block footer
+  script(src="/assets/js/jquery.min.js")
+  script(src="/assets/js/bootstrap.min.js")
+  script(type="text/javascript").
+    $(function() {
+      var page = 1;
+      var fetchImages = function() {
+        $.get('/images?page=' + page, function(data) {
+          if( data.success && data.images.length > 0 ) {
+            page = page + 1;
+            data.images.forEach(function(image) {
+              $('#images').append('<div class="col-xs-6 col-md-3">'
+                + '<a class="thumbnail" href="/admin/image/' + image + '">'
+                + '<img src="/image/' + image + '/view?w=200">'
+                + '</a>'
+              );
+            });
+          }
+        }, 'json');
+      };
+      fetchImages();
+      $('#load-image').click(fetchImages);
+    });

@@ -42,7 +42,7 @@ exports.addFile = function(name, file, callback) {
         height: data.size.height,
         mime: contentType,
         data: file
-      }).lpush(config.redis.prefix + ':all',name).exec(function(err) {
+      }).lpush(config.redis.prefix + ':all', name).exec(function(err) {
         redis.quit();
         if (err) {return callback('store image file error')};
         return callback(null);
@@ -165,4 +165,14 @@ exports.getSmartFile = function(name, query, callback) {
       });
     }
   });
+};
+
+exports.getAllPage = function(page, callback) {
+  if (page <= 0) {
+    page = 1;
+  }
+  var start = (page - 1) * 20;
+  var end = start + 20;
+  var redis = Redis.get();
+  redis.lrange(config.redis.prefix + ':all', start, end, (err, data) => callback(err, data));
 };

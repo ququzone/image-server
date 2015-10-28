@@ -5,6 +5,25 @@ var _ = require('underscore')
   , utils = require('../lib/utils')
   , store = require('../store');
 
+exports.all = function *() {
+  yield function(ctx) {
+    var deferred = Q.defer();
+    var page = ctx.query.page || 1;
+    store.getAllPage(page, (err, data) => {
+      if (err) {
+        ctx.set('Content-Type', 'application/json');
+        ctx.status = 500;
+        ctx.body = {success: false, msg: 'redis server error.'};
+        deferred.resolve();
+        return;
+      }
+      ctx.body = {success: true, images: data};
+      return deferred.resolve();
+    });
+    return deferred.promise;
+  }(this);
+};
+
 exports.get = function *(id) {
   var ctx = this;
   yield get(ctx, id);

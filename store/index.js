@@ -1,6 +1,7 @@
 var image = require('./image')
   , user = require('./user');
 
+exports.getAllPage = image.getAllPage;
 exports.addFile = image.addFile;
 exports.getFileMeta = image.getFileMeta;
 exports.getFile = image.getFile;
