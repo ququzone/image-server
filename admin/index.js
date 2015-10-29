@@ -66,3 +66,7 @@ exports.install = function *() {
     return deferred.promise;
   }(this, body);
 };
+
+exports.image = function *(id) {
+  this.body = this.jade('image.jade', {id: id});
+};

@@ -19,13 +19,14 @@ var render = views(__dirname + '/views', {
 
 app.use(function* (next) {
   this.render = render;
-  this.jade = view => jade.renderFile(__dirname + '/views/' + view);
+  this.jade = (view, context) => jade.renderFile(__dirname + '/views/' + view, context);
   yield next;
 });
 
 app.use(route.get('/', admin.index));
 app.use(route.get('/install', admin.installPage));
 app.use(route.post('/install', admin.install));
+app.use(route.get('/admin/image/:id', admin.image));
 
 app.use(route.get('/images', images.all));
 

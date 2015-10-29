@@ -1,0 +1,12 @@
+extends ./tpl/layout.jade
+
+block content
+  .container
+    .image-header
+      h1 View Image
+      hr
+    .row.text-center
+      div
+        a(href="/image/" + id)= id
+      div
+        img(src="/image/" + id)
