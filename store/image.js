@@ -174,5 +174,8 @@ exports.getAllPage = function(page, callback) {
   var start = (page - 1) * 20;
   var end = start + 20;
   var redis = Redis.get();
-  redis.lrange(config.redis.prefix + ':all', start, end, (err, data) => callback(err, data));
+  redis.lrange(config.redis.prefix + ':all', start, end, (err, data) => {
+    redis.quit();
+    callback(err, data);
+  });
 };
