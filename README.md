@@ -12,14 +12,39 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 ### 安装
 
 1. Install Redis
+
+	```
+	$ sudo apt-get install redis-server
+	```
+
 2. Install Node.js
+
+	```
+	$ sudo apt-get install nodejs
+	```
+
 3. Install GraphicsMagick
-4. Edit `/etc/hosts` file add below line
+
+	```
+	$ sudo apt-get install graphicsmagick
+	```
+
+4. Install Canvas dependencies
+
+	```
+	$ sudo apt-get install libjpeg-dev
+  $ sudo apt-get install libpango1.0-dev
+  $ sudo apt-get install libcairo2-dev
+	```
+
+5. Edit `/etc/hosts` file add below line
+
 	```
 	127.0.0.1 image-server.redis.host
 	```
 
-5. Install Image Server
+6. Install Image Server
+
 	```
 	$ git clone https://github.com/ququzone/image-server.git
 	$ cd image-server
