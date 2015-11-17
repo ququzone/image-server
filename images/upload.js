@@ -1,5 +1,4 @@
 var uuid = require('node-uuid')
-  , Q = require('q')
   , parse = require('co-busboy')
   , utils = require('../lib/utils')
   , store = require('../store');
@@ -12,31 +11,28 @@ module.exports = function *() {
   var file = yield parts;
   if (file) {
     var id = uuid.v4();
-    yield addFile(ctx, id, file);
+    yield () => {
+      return new Promise((resolve, reject) => {
+        utils.streamToUnemptyBuffer(file, (err, buffer) => {
+          if (err) {
+            ctx.set('Content-Type', 'application/json');
+            ctx.body = {success: false, msg: 'read file data error.'};
+            return resolve();
+          };
+          store.addFile(id, buffer, err => {
+            ctx.set('Content-Type', 'application/json');
+            if (err) {
+              ctx.body = {success: false, msg: 'find file from db error.'};
+            } else {
+              ctx.body = {success: true, id: id};
+            }
+            return resolve();
+          });
+        });
+      });
+    }();
   } else {
     ctx.set('Content-Type', 'application/json');
     ctx.body = {success: false, msg: 'no file found.'};
   }
-};
-
-function addFile(ctx, id, file) {
-  var deferred = Q.defer();
-  utils.streamToUnemptyBuffer(file, function(err, buffer) {
-    if (err) {
-      ctx.set('Content-Type', 'application/json');
-      ctx.body = {success: false, msg: 'read file data error.'};
-      deferred.resolve();
-      return;
-    };
-    store.addFile(id, buffer, function(err) {
-      ctx.set('Content-Type', 'application/json');
-      if (err) {
-        ctx.body = {success: false, msg: 'find file from db error.'};
-      } else {
-        ctx.body = {success: true, id: id};
-      }
-      deferred.resolve();
-    });
-  });
-  return deferred.promise;
 };
