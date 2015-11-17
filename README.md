@@ -23,18 +23,34 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 	$ sudo apt-get install nodejs
 	```
 
-3. Install GraphicsMagick
-
-	```
-	$ sudo apt-get install graphicsmagick
-	```
-
-4. Install Canvas dependencies
+3. Install Canvas dependencies
 
 	```
 	$ sudo apt-get install libjpeg-dev
   $ sudo apt-get install libpango1.0-dev
   $ sudo apt-get install libcairo2-dev
+	```
+
+4. Install GraphicsMagick
+
+	```
+	$ sudo apt-get install -y \
+			autoconf \
+			build-essential \
+			graphicsmagick \
+			libbz2-dev \
+			libcurl4-openssl-dev \
+			libevent-dev \
+			libffi-dev \
+			libglib2.0-dev \
+			libjpeg-dev \
+			liblzma-dev \
+			libncurses-dev \
+			libssl-dev \
+			libxml2-dev \
+			libxslt-dev \
+			libyaml-dev \
+			zlib1g-dev
 	```
 
 5. Edit `/etc/hosts` file add below line
