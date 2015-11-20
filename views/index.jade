@@ -1,17 +1,28 @@
 extends ./tpl/layout.jade
 
+block head
+  style.
+    .grid-item {
+      border-radius: 3px;
+      border: 1px solid #CCCCCC;
+      margin-bottom: 10px;
+      padding: 3px 5px;
+    }
+
 block content
   .container
     .image-header
       h1 Image Server
       hr
-    #images.row
+    #images
     .image-footer.text-center
       a#load-image(href="javascript:void(0)") Load image
 
 block footer
   script(src="/assets/js/jquery.min.js")
   script(src="/assets/js/bootstrap.min.js")
+  script(src="/assets/js/imagesloaded.pkgd.min.js")
+  script(src="/assets/js/masonry.pkgd.min.js")
   script(type="text/javascript").
     $(function() {
       var page = 1;
@@ -20,11 +31,20 @@ block footer
           if( data.success && data.images.length > 0 ) {
             page = page + 1;
             data.images.forEach(function(image) {
-              $('#images').append('<div class="col-xs-6 col-md-3">'
-                + '<a class="thumbnail" href="/admin/image/' + image + '">'
+              $('#images').append('<div class="grid-item">'
+                + '<a href="/admin/image/' + image + '">'
                 + '<img src="/image/' + image + '/view?w=200">'
                 + '</a>'
+                + '</div>'
               );
+            });
+            $('#images').masonry({
+              "gutter": 10,
+              itemSelector: '.grid-item',
+              columnWidth: 210
+            });
+            $('#images').imagesLoaded().progress( function() {
+              $('#images').masonry('layout');
             });
           }
         }, 'json');
