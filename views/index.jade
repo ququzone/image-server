@@ -2,6 +2,9 @@ extends ./tpl/layout.jade
 
 block head
   style.
+    #images {
+      margin: 0 auto;
+    }
     .grid-item {
       border-radius: 3px;
       border: 1px solid #CCCCCC;
@@ -39,9 +42,10 @@ block footer
               );
             });
             $('#images').masonry({
-              "gutter": 10,
+              gutter: 10,
               itemSelector: '.grid-item',
-              columnWidth: 210
+              columnWidth: 210,
+              isFitWidth: true
             });
             $('#images').imagesLoaded().progress( function() {
               $('#images').masonry('layout');

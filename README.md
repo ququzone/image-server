@@ -8,6 +8,7 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 1. [Redis](http://redis.io/)
 2. [Node.js](https://nodejs.org/en/)
 3. [GraphicsMagick](http://www.graphicsmagick.org/)
+4. [SeaweedFS](https://github.com/chrislusf/seaweedfs)
 
 ### 安装
 
@@ -53,13 +54,34 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 			zlib1g-dev
 	```
 
-5. Edit `/etc/hosts` file add below line
+5. Install SeaweedFS
+
+	- Install go and set up $GOPATH [Guide](https://golang.org/doc/install)
+	- Install mercurial
+		```
+		sudo apt-get install -y mercurial
+		```
+	- Download, compile and install SeaweedFS
+		```
+		$ go get github.com/chrislusf/seaweedfs/go/weed
+		```
+	- Start Master Server
+		```
+		$ $GOPATH/bin/weed master
+		```
+	- Start Volume Servers
+		```
+		$ $GOPATH/bin/weed volume -dir="/tmp/data1" -max=5 -mserver="localhost:9333" -port=50070
+		```
+
+
+6. Edit `/etc/hosts` file add below line
 
 	```
 	127.0.0.1 image-server.redis.host
 	```
 
-6. Install Image Server
+7. Install Image Server
 
 	```
 	$ git clone https://github.com/ququzone/image-server.git
