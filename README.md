@@ -58,22 +58,28 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 
 	- Install go and set up $GOPATH [Guide](https://golang.org/doc/install)
 	- Install mercurial
+
 		```
 		sudo apt-get install -y mercurial
 		```
+
 	- Download, compile and install SeaweedFS
+
 		```
 		$ go get github.com/chrislusf/seaweedfs/go/weed
 		```
+
 	- Start Master Server
+
 		```
 		$ $GOPATH/bin/weed master
 		```
+
 	- Start Volume Servers
+
 		```
 		$ $GOPATH/bin/weed volume -dir="/tmp/data1" -max=5 -mserver="localhost:9333" -port=50070
 		```
-
 
 6. Edit `/etc/hosts` file add below line
 
