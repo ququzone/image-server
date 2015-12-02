@@ -41,7 +41,7 @@ func main() {
   }
 
   wg.Wait()
-  log.Printf("Migate Redis file success in %v microseconds.\n", time.Now().Sub(startTime))
+  log.Printf("Migate Redis file success in %v.\n", time.Now().Sub(startTime))
 }
 
 func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
@@ -59,7 +59,10 @@ func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
   }
 
   for _, key := range keys {
-    // TODO
-    log.Println(key);
+    data, err := conn.Cmd("HGET", "image:file:" + key, "data").Bytes()
+    if err != null {
+      log.Fatal(err)
+    }
+    // TODO file to SeaweedFS
   }
 }
