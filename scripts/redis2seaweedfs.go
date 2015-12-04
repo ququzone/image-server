@@ -1,7 +1,9 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -46,6 +48,13 @@ func main() {
 	log.Printf("Migate Redis file success in %v.\n", time.Now().Sub(startTime))
 }
 
+type assignResult struct {
+	FID       string
+	URL       string
+	PublicURL string
+	Count     int
+}
+
 func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
 	defer wg.Done()
 
@@ -61,14 +70,24 @@ func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
 	}
 
 	for _, key := range keys {
-		data, err := conn.Cmd("HGET", "image:file:"+key, "data").Bytes()
+		data, err := conn.Cmd("HMGET", "image:file:"+key, "mime", "data").Array()
 		if err != nil {
 			log.Fatal(err)
 		}
-		resp, err := http.Post("http://localhost:9333", "application/octet-stream", bytes.NewReader(data))
+		data[0].Str()
+		data[1].Bytes()
+		// , mime, bytes.NewReader(file)
+		resp, err := http.Post("http://localhost:9333/dir/assign", "", nil)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var ar assignResult
+		json.Unmarshal(body, &ar)
+		log.Printf("%s,%s,%s,%d", ar.FID, ar.PublicURL, ar.URL, ar.Count)
 	}
 }
