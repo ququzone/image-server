@@ -1,10 +1,11 @@
 package main
 
 import (
-	// "bytes"
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"sync"
 	"time"
@@ -70,24 +71,51 @@ func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
 	}
 
 	for _, key := range keys {
-		data, err := conn.Cmd("HMGET", "image:file:"+key, "mime", "data").Array()
+		data, err := conn.Cmd("HGET", "image:file:"+key, "data").Bytes()
 		if err != nil {
 			log.Fatal(err)
 		}
-		data[0].Str()
-		data[1].Bytes()
-		// , mime, bytes.NewReader(file)
-		resp, err := http.Post("http://localhost:9333/dir/assign", "", nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		var ar assignResult
-		json.Unmarshal(body, &ar)
-		log.Printf("%s,%s,%s,%d", ar.FID, ar.PublicURL, ar.URL, ar.Count)
+		fid := saveFileToFS(data)
+		conn.PipeAppend("HDEL", "image:file:"+key, "data")
+		conn.PipeAppend("HSET", "image:file:"+key, "dfid", fid)
+		conn.PipeResp()
 	}
+}
+
+func saveFileToFS(file []byte) string {
+	client := &http.Client{}
+	assReq, err := http.NewRequest("POST", "http://localhost:9333/dir/assign", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	assResp, err := client.Do(assReq)
+	body, err := ioutil.ReadAll(assResp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer assResp.Body.Close()
+	var ar assignResult
+	json.Unmarshal(body, &ar)
+
+	saveBody := &bytes.Buffer{}
+	writer := multipart.NewWriter(saveBody)
+	part, err := writer.CreateFormField("file")
+	if err != nil {
+		log.Fatal(err)
+	}
+	part.Write(file)
+	err = writer.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	saveReq, err := http.NewRequest("PUT", "http://"+ar.URL+"/"+ar.FID, saveBody)
+	saveReq.Header.Add("Content-Type", writer.FormDataContentType())
+	saveResp, err := client.Do(saveReq)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body, err = ioutil.ReadAll(saveResp.Body)
+	defer saveResp.Body.Close()
+	return ar.FID
 }
