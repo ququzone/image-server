@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mediocregopher/radix.v2/pool"
+	"github.com/mediocregopher/radix.v2/redis"
 )
 
 func main() {
@@ -79,6 +80,21 @@ func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
 		conn.PipeAppend("HDEL", "image:file:"+key, "data")
 		conn.PipeAppend("HSET", "image:file:"+key, "dfid", fid)
 		conn.PipeResp()
+		processSubImages(conn, "cache", key)
+		processSubImages(conn, "smart", key)
+	}
+}
+
+func processSubImages(conn *redis.Client, typeName string, key string) {
+	var typeKey = "image:" + typeName + ":" + key
+	keys, err := conn.Cmd("HKEYS", typeKey).List()
+	if err != nil {
+		log.Fatal("fetch all sub hash keys error")
+	}
+	for _, name := range keys {
+		data, _ := conn.Cmd("HGET", typeKey, name).Bytes()
+		fid := saveFileToFS(data)
+		conn.Cmd("HSET", typeKey, name, fid)
 	}
 }
 
