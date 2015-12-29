@@ -2,6 +2,7 @@ var gm = require('gm')
   , _ = require('underscore')
   , Canvas = require('canvas')
   , smartcrop = require('../lib/smartcrop')
+  , seaweedfs = require('../lib/seaweedfs')
   , mime = require('../lib/mime')
   , utils = require('../lib/utils')
   , config = require('../config')
@@ -35,17 +36,20 @@ exports.addFile = function(name, file, callback) {
         redis.quit();
         return callback('file already exists')
       };
-      redis.multi().hmset(key, {
-        mtime: new Date().toUTCString(),
-        size: file.length,
-        width: data.size.width,
-        height: data.size.height,
-        mime: contentType,
-        data: file
-      }).lpush(config.redis.prefix + ':all', name).exec(function(err) {
-        redis.quit();
-        if (err) {return callback('store image file error')};
-        return callback(null);
+      seaweedfs.writeFile(file, (err, fid) => {
+        if (err) return callback(err);
+        redis.multi().hmset(key, {
+          mtime: new Date().toUTCString(),
+          size: file.length,
+          width: data.size.width,
+          height: data.size.height,
+          mime: contentType,
+          dfid: fid
+        }).lpush(config.redis.prefix + ':all', name).exec(function(err) {
+          redis.quit();
+          if (err) {return callback('store image file error')};
+          return callback(null);
+        });
       });
     });
   });
@@ -74,10 +78,13 @@ exports.getFileMeta = function(name, callback) {
 exports.getFile = function(name, callback) {
   var redis = Redis.get();
   var key = getFileKey(name);
-  redis.hgetBuffer(key, 'data', function(err, data) {
+  redis.hget(key, 'dfid', function(err, data) {
     redis.quit();
     if(err) return callback(err);
-    callback(null, data);
+    seaweedfs.getFile(data, (err, file) => {
+      if(err) return callback(err);
+      callback(null, file);
+    });
   });
 };
 
@@ -85,33 +92,43 @@ exports.getFileCache = function(name, query, callback) {
   var redis = Redis.get();
   var hname = getCacheKey(name);
   var key = 'w/' + query.w + '/h/' + query.h;
-  redis.hgetBuffer(hname, key, function(err, data) {
+  redis.hget(hname, key, function(err, data) {
     if (err) {
       redis.quit();
       return callback('fetch file from redis error');
     }
     if (data) {
       redis.quit();
-      return callback(null, data);
+      seaweedfs.getFile(data, (err, file) => {
+        if(err) return callback(err);
+        callback(null, file);
+      });
+      return;
     } else {
-      redis.hgetBuffer(getFileKey(name), 'data', function(err, originData) {
+      redis.hget(getFileKey(name), 'dfid', function(err, data) {
         if (err) {
           redis.quit();
           return callback('file not found');
         }
-        gm(originData)
-        .resize(query.w, query.h)
-        .toBuffer(function(err, buffer) {
-          if (err) {
-            redis.quit();
-            return callback('file resize error');
-          }
-          redis.hset(hname, key, buffer, function(err) {
-            redis.quit();
+        seaweedfs.getFile(data, (err, file) => {
+          if(err) return callback(err);
+          gm(file)
+          .resize(query.w, query.h)
+          .toBuffer(function(err, buffer) {
             if (err) {
-              return callback('set file to redis error');
+              redis.quit();
+              return callback('file resize error');
             }
-            return callback(null, buffer);
+            seaweedfs.writeFile(buffer, (err, fid) => {
+              if(err) return callback(err);
+              redis.hset(hname, key, fid, function(err) {
+                redis.quit();
+                if (err) {
+                  return callback('set fid to redis error');
+                }
+                return callback(null, buffer);
+              });
+            });
           });
         });
       });
@@ -123,43 +140,53 @@ exports.getSmartFile = function(name, query, callback) {
   var redis = Redis.get();
   var hname = getSmartKey(name);
   var key = 'w/' + query.w + '/h/' + query.h;
-  redis.hgetBuffer(hname, key, function(err, data) {
+  redis.hget(hname, key, function(err, data) {
     if (err) {
       redis.quit();
       return callback('fetch file from redis error');
     }
     if (data) {
       redis.quit();
-      return callback(null, data);
+      seaweedfs.getFile(data, (err, file) => {
+        if(err) return callback(err);
+        callback(null, file);
+      });
+      return;
     } else {
-      redis.hgetBuffer(getFileKey(name), 'data', function(err, originData) {
+      redis.hget(getFileKey(name), 'dfid', function(err, data) {
         if (err) {
           redis.quit();
           return callback('file not found');
         }
-        var img = new Canvas.Image()
-          , options = _.extend({canvasFactory: function(w, h){ return new Canvas(w, h); }}, {width:parseInt(query.w), height:parseInt(query.h)});
-        img.src = originData;
-        smartcrop.crop(img, options, function(result) {
-          var canvas = new Canvas(options.width, options.height)
-            , context = canvas.getContext('2d')
-            , crop = result.topCrop;
-          context.patternQuality = 'best';
-          context.filter = 'best';
-          context.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
-          utils.streamToUnemptyBuffer(canvas.syncJPEGStream({quality: 90}), function(err, cropData) {
-            if (err) {
-              redis.quit();
-              return callback('file crop error.');
-            } else {
-              redis.hset(hname, key, cropData, function(err) {
+        seaweedfs.getFile(data, (err, file) => {
+          if(err) return callback(err);
+          var img = new Canvas.Image()
+            , options = _.extend({canvasFactory: function(w, h){ return new Canvas(w, h); }}, {width:parseInt(query.w), height:parseInt(query.h)});
+          img.src = file;
+          smartcrop.crop(img, options, function(result) {
+            var canvas = new Canvas(options.width, options.height)
+              , context = canvas.getContext('2d')
+              , crop = result.topCrop;
+            context.patternQuality = 'best';
+            context.filter = 'best';
+            context.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+            utils.streamToUnemptyBuffer(canvas.syncJPEGStream({quality: 90}), function(err, cropData) {
+              if (err) {
                 redis.quit();
-                if (err) {
-                  return callback('set file to redis error');
-                }
-                return callback(null, cropData);
-              });
-            }
+                return callback('file crop error.');
+              } else {
+                seaweedfs.writeFile(cropData, (err, fid) => {
+                  if(err) return callback(err);
+                  redis.hset(hname, key, fid, function(err) {
+                    redis.quit();
+                    if (err) {
+                      return callback('set file to redis error');
+                    }
+                    return callback(null, cropData);
+                  });
+                });
+              }
+            });
           });
         });
       });

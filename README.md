@@ -85,6 +85,7 @@ Image Server 主要用来解决中小型网站和手机应用后台的图片存�
 
 	```
 	127.0.0.1 image-server.redis.host
+	127.0.0.1 seaweedfs.master.host
 	```
 
 7. Install Image Server

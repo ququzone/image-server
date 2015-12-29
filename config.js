@@ -5,5 +5,8 @@ module.exports = {
     prefix: 'image'
   },
   salt: 'a734%$3hSfdH<ja#49&^63JSfdscs!32342)',
-  seaweedfs: 'http://seaweedfs.master.host:9333'
+  seaweedfs: {
+    host: 'seaweedfs.master.host',
+    port: 9333
+  }
 };
