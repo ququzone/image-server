@@ -77,9 +77,8 @@ func migrateRange(wg *sync.WaitGroup, pool *pool.Pool, start int64, end int64) {
 			log.Fatal(err)
 		}
 		fid := saveFileToFS(data)
-		conn.PipeAppend("HDEL", "image:file:"+key, "data")
-		conn.PipeAppend("HSET", "image:file:"+key, "dfid", fid)
-		conn.PipeResp()
+		conn.Cmd("HDEL", "image:file:"+key, "data")
+		conn.Cmd("HSET", "image:file:"+key, "dfid", fid)
 		processSubImages(conn, "cache", key)
 		processSubImages(conn, "smart", key)
 	}
