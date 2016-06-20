@@ -1,0 +1,19 @@
+version: '2'
+services:
+  redis:
+    image: redis
+  seaweedfs_matser:
+    image: carmark/seaweedfs
+    command: master
+  seaweedfs_data1:
+    image: carmark/seaweedfs
+    depends_on:
+      - seaweedfs_matser
+    command: volume -dir="/data" -max=5 -mserver="seaweedfs_matser:9333" -ip=seaweedfs_data1 -port=50070
+  server:
+    image: image-server
+    links:
+      - "redis:image-server.redis.host"
+      - "seaweedfs_matser:seaweedfs.master.host"
+    ports:
+      - "3000:3000"
